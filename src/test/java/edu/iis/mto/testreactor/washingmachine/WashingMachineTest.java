@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -297,6 +298,53 @@ class WashingMachineTest {
 
         LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
         assertEquals(expectedLaundryStatus, actualLaundryStatus);
+    }
+
+    @Test
+    void correctOrderTest() throws WaterPumpException, EngineException {
+
+        LaundryBatch laundryBatch = LaundryBatch.builder()
+                .withWeightKg(3)
+                .withMaterialType(Material.JEANS)
+                .build();
+
+        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
+                .withSpin(true)
+                .withProgram(Program.SHORT)
+                .build();
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
+        InOrder order = Mockito.inOrder(waterPump, engine);
+        order.verify(waterPump).pour(3);
+        order.verify(engine).runWashing(Program.SHORT.getTimeInMinutes());
+        order.verify(waterPump).release();
+        order.verify(engine).spin();
+    }
+
+    @Test
+    void autoDetectCorrectOrderTest() throws WaterPumpException, EngineException {
+
+        LaundryBatch laundryBatch = LaundryBatch.builder()
+                .withWeightKg(3)
+                .withMaterialType(Material.JEANS)
+                .build();
+
+        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
+                .withSpin(true)
+                .withProgram(Program.AUTODETECT)
+                .build();
+
+        Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(50));
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
+        InOrder order = Mockito.inOrder(waterPump, engine, dirtDetector);
+        order.verify(dirtDetector).detectDirtDegree(laundryBatch);
+        order.verify(waterPump).pour(3);
+        order.verify(engine).runWashing(Program.MEDIUM.getTimeInMinutes());
+        order.verify(waterPump).release();
+        order.verify(engine).spin();
     }
 
 
