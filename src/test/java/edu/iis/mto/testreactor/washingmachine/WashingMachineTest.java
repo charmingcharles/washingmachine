@@ -228,9 +228,9 @@ class WashingMachineTest {
     }
 
     @Test
-    void autoDetectCorrectOrderTest() throws WaterPumpException, EngineException {
+    void autoDetectButNoSpinCorrectOrderTest() throws WaterPumpException, EngineException {
         LaundryBatch laundryBatch = generateLaundryBatch(3, Material.JEANS);
-        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.AUTODETECT);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(false, Program.AUTODETECT);
 
         Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(50));
 
@@ -241,7 +241,6 @@ class WashingMachineTest {
         order.verify(waterPump).pour(3);
         order.verify(engine).runWashing(Program.MEDIUM.getTimeInMinutes());
         order.verify(waterPump).release();
-        order.verify(engine).spin();
     }
 
 
