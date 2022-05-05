@@ -1,8 +1,6 @@
 package edu.iis.mto.testreactor.washingmachine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +22,28 @@ class WashingMachineTest {
 
     private WashingMachine washingMachine;
 
+    private LaundryBatch generateLaundryBatch(int weight, Material material){
+        return LaundryBatch.builder()
+                .withWeightKg(weight)
+                .withMaterialType(material)
+                .build();
+    }
+
+    private ProgramConfiguration generateProgramConfiguration(boolean spin, Program program){
+        return ProgramConfiguration.builder()
+                .withSpin(spin)
+                .withProgram(program)
+                .build();
+    }
+
+    private LaundryStatus generateLaundryStatus(ErrorCode errorCode, Result result, Program program){
+        return LaundryStatus.builder()
+                .withErrorCode(errorCode)
+                .withResult(result)
+                .withRunnedProgram(program)
+                .build();
+    }
+
     @BeforeEach
     void setUp(){
         dirtDetector = Mockito.mock(DirtDetector.class);
@@ -34,21 +54,9 @@ class WashingMachineTest {
 
     @Test
     void test() {
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.LONG)
-                .build();
-
-        LaundryStatus expectedLaundryStatus = LaundryStatus.builder()
-                .withErrorCode(ErrorCode.NO_ERROR)
-                .withResult(Result.SUCCESS)
-                .withRunnedProgram(Program.LONG)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.LONG);
+        LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.NO_ERROR, Result.SUCCESS, Program.LONG);
 
         LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
         assertEquals(expectedLaundryStatus, actualLaundryStatus);
@@ -56,37 +64,24 @@ class WashingMachineTest {
 
     @Test
     void noSpinProgramLongBehaviorTest() throws WaterPumpException, EngineException {
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(false, Program.LONG);
+        LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.NO_ERROR, Result.SUCCESS, Program.LONG);
 
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(false)
-                .withProgram(Program.LONG)
-                .build();
-
-        washingMachine.start(laundryBatch, programConfiguration);
+        LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
 
         Mockito.verify(waterPump, Mockito.times(1)).pour(5);
         Mockito.verify(waterPump, Mockito.times(1)).release();
         Mockito.verify(engine, Mockito.times(1)).runWashing(Program.LONG.getTimeInMinutes());
         Mockito.verify(engine, Mockito.times(0)).spin();
         assertEquals(Program.LONG.getTimeInMinutes(), programConfiguration.getProgram().getTimeInMinutes());
+        assertEquals(expectedLaundryStatus, actualLaundryStatus);
     }
 
     @Test
     void spinProgramMediumBehaviorTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.MEDIUM)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.MEDIUM);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -99,16 +94,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramShortBehaviorTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -121,16 +108,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramAutodetectBehaviorZeroPercentTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.AUTODETECT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.AUTODETECT);
 
         Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(0));
 
@@ -145,16 +124,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramAutodetectBehaviorFiftyPercentTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.AUTODETECT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.AUTODETECT);
 
         Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(50));
 
@@ -169,16 +140,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramAutodetectBehaviorSeventyPercentTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(5)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.AUTODETECT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.AUTODETECT);
 
         Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(70));
 
@@ -193,16 +156,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramShortZeroWeightBehaviorTwentyPercentTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(0)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(0, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -214,22 +169,9 @@ class WashingMachineTest {
 
     @Test
     void spinProgramOverweightBehaviorTwentyPercentTest() {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(10)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
-
-        LaundryStatus expectedLaundryStatus = LaundryStatus.builder()
-                .withErrorCode(ErrorCode.TOO_HEAVY)
-                .withRunnedProgram(null)
-                .withResult(Result.FAILURE)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(10, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
+        LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.TOO_HEAVY, Result.FAILURE, null);
 
         LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
         assertEquals(expectedLaundryStatus, actualLaundryStatus);
@@ -237,16 +179,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramShortNegativeWeightBehaviorTwentyPercentTest() throws WaterPumpException, EngineException { //is it ok?
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(-4)
-                .withMaterialType(Material.COTTON)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(-4, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -258,16 +192,8 @@ class WashingMachineTest {
 
     @Test
     void spinProgramLongLessThanHalfWeightSpecialMaterialBehaviorTwentyPercentTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(3)
-                .withMaterialType(Material.JEANS)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(3, Material.JEANS);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -279,22 +205,9 @@ class WashingMachineTest {
 
     @Test
     void spinProgramLongHalfWeightSpecialMaterialBehaviorTwentyPercentTest() {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(4)
-                .withMaterialType(Material.JEANS)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
-
-        LaundryStatus expectedLaundryStatus = LaundryStatus.builder()
-                .withErrorCode(ErrorCode.TOO_HEAVY)
-                .withRunnedProgram(null)
-                .withResult(Result.FAILURE)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(4, Material.JEANS);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
+        LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.TOO_HEAVY, Result.FAILURE, null);
 
         LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
         assertEquals(expectedLaundryStatus, actualLaundryStatus);
@@ -302,16 +215,8 @@ class WashingMachineTest {
 
     @Test
     void correctOrderTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(3)
-                .withMaterialType(Material.JEANS)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.SHORT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(3, Material.JEANS);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
 
         washingMachine.start(laundryBatch, programConfiguration);
 
@@ -324,16 +229,8 @@ class WashingMachineTest {
 
     @Test
     void autoDetectCorrectOrderTest() throws WaterPumpException, EngineException {
-
-        LaundryBatch laundryBatch = LaundryBatch.builder()
-                .withWeightKg(3)
-                .withMaterialType(Material.JEANS)
-                .build();
-
-        ProgramConfiguration programConfiguration = ProgramConfiguration.builder()
-                .withSpin(true)
-                .withProgram(Program.AUTODETECT)
-                .build();
+        LaundryBatch laundryBatch = generateLaundryBatch(3, Material.JEANS);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.AUTODETECT);
 
         Mockito.when(dirtDetector.detectDirtDegree(laundryBatch)).thenReturn(new Percentage(50));
 
