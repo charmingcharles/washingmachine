@@ -53,7 +53,7 @@ class WashingMachineTest {
     }
 
     @Test
-    void test() {
+    void successfulLongWashingTest() {
         LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
         ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.LONG);
         LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.NO_ERROR, Result.SUCCESS, Program.LONG);
