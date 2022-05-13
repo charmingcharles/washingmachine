@@ -63,19 +63,28 @@ class WashingMachineTest {
     }
 
     @Test
-    void noSpinProgramLongBehaviorTest() throws WaterPumpException, EngineException {
+    void noSpinProgramLongStateTest(){
         LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
         ProgramConfiguration programConfiguration = generateProgramConfiguration(false, Program.LONG);
         LaundryStatus expectedLaundryStatus = generateLaundryStatus(ErrorCode.NO_ERROR, Result.SUCCESS, Program.LONG);
 
         LaundryStatus actualLaundryStatus = washingMachine.start(laundryBatch, programConfiguration);
 
+        assertEquals(Program.LONG.getTimeInMinutes(), programConfiguration.getProgram().getTimeInMinutes());
+        assertEquals(expectedLaundryStatus, actualLaundryStatus);
+    }
+
+    @Test
+    void noSpinProgramLongBehaviorTest() throws WaterPumpException, EngineException {
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(false, Program.LONG);
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
         Mockito.verify(waterPump, Mockito.times(1)).pour(5);
         Mockito.verify(waterPump, Mockito.times(1)).release();
         Mockito.verify(engine, Mockito.times(1)).runWashing(Program.LONG.getTimeInMinutes());
         Mockito.verify(engine, Mockito.times(0)).spin();
-        assertEquals(Program.LONG.getTimeInMinutes(), programConfiguration.getProgram().getTimeInMinutes());
-        assertEquals(expectedLaundryStatus, actualLaundryStatus);
     }
 
     @Test
@@ -89,6 +98,15 @@ class WashingMachineTest {
         Mockito.verify(waterPump, Mockito.times(1)).release();
         Mockito.verify(engine, Mockito.times(1)).runWashing(Program.MEDIUM.getTimeInMinutes());
         Mockito.verify(engine, Mockito.times(1)).spin();
+    }
+
+    @Test
+    void spinProgramMediumStateTest(){
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.MEDIUM);
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
         assertEquals(Program.MEDIUM.getTimeInMinutes(), programConfiguration.getProgram().getTimeInMinutes());
     }
 
@@ -103,6 +121,16 @@ class WashingMachineTest {
         Mockito.verify(waterPump, Mockito.times(1)).release();
         Mockito.verify(engine, Mockito.times(1)).runWashing(Program.SHORT.getTimeInMinutes());
         Mockito.verify(engine, Mockito.times(1)).spin();
+
+    }
+
+    @Test
+    void spinProgramShortStateTest(){
+        LaundryBatch laundryBatch = generateLaundryBatch(5, Material.COTTON);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(true, Program.SHORT);
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
         assertEquals(Program.SHORT.getTimeInMinutes(), programConfiguration.getProgram().getTimeInMinutes());
     }
 
@@ -201,6 +229,19 @@ class WashingMachineTest {
         Mockito.verify(waterPump, Mockito.times(1)).release();
         Mockito.verify(engine, Mockito.times(1)).runWashing(Program.SHORT.getTimeInMinutes());
         Mockito.verify(engine, Mockito.times(1)).spin();
+    }
+
+    @Test
+    void noSpinProgramLongLessThanHalfWeightSpecialMaterialBehaviorTwentyPercentTest() throws WaterPumpException, EngineException {
+        LaundryBatch laundryBatch = generateLaundryBatch(3, Material.JEANS);
+        ProgramConfiguration programConfiguration = generateProgramConfiguration(false, Program.SHORT);
+
+        washingMachine.start(laundryBatch, programConfiguration);
+
+        Mockito.verify(waterPump, Mockito.times(1)).pour(3);
+        Mockito.verify(waterPump, Mockito.times(1)).release();
+        Mockito.verify(engine, Mockito.times(1)).runWashing(Program.SHORT.getTimeInMinutes());
+        Mockito.verify(engine, Mockito.times(0)).spin();
     }
 
     @Test
